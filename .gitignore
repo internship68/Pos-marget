@@ -1,7 +1,35 @@
+# Dependencies
 node_modules/
-.next/
+.pnp
+.pnp.js
+
+# Testing
 coverage/
+
+# Production
+dist/
+.next/
+out/
+build/
+
+# Next.js
+.next/
+out/
+
+# Misc
 .DS_Store
-*.log
-.env*
-!.env.example
+*.pem
+
+# Env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

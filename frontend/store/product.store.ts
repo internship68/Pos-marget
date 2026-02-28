@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Product } from './pos.store';
+import { ProductService, Product } from '../lib/services/product.service';
 
 export interface Category {
   id: string;
@@ -9,51 +9,70 @@ export interface Category {
 interface ProductState {
   products: Product[];
   categories: Category[];
-  addProduct: (product: Omit<Product, 'id'>) => void;
-  updateProduct: (id: string, product: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
-  adjustStock: (id: string, amount: number) => void;
-  setStock: (id: string, amount: number) => void;
-  addCategory: (name: string) => void;
-  updateCategory: (id: string, name: string) => void;
-  deleteCategory: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+
+  fetchProducts: () => Promise<void>;
+  addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
+
+  // Local state methods (if needed for performance, but should usually sync with DB)
+  adjustStock: (id: string, amount: number) => Promise<void>;
 }
 
-export const useProductStore = create<ProductState>((set) => ({
-  categories: [
-    { id: '1', name: 'เครื่องดื่ม' },
-    { id: '2', name: 'อาหาร' },
-    { id: '3', name: 'เบเกอรี่' },
-    { id: '4', name: 'ของใช้ทั่วไป' },
-  ],
-  products: [
-    { id: '1', name: 'น้ำดื่มสิงห์ 500มล.', barcode: '885012345678', category: 'เครื่องดื่ม', cost_price: 5, selling_price: 10, stock: 120, low_stock_alert: 20, image_url: '' },
-    { id: '2', name: 'มาม่าคัพ หมูสับ', barcode: '885098765432', category: 'อาหาร', cost_price: 9.5, selling_price: 15, stock: 5, low_stock_alert: 10, image_url: '' },
-    { id: '3', name: 'ทิชชู่ซิลค์ แพ็ค 4', barcode: '885000112233', category: 'ของใช้ทั่วไป', cost_price: 45, selling_price: 69, stock: 0, low_stock_alert: 5, image_url: '' },
-    { id: '4', name: 'ข้าวหอมมะลิ 5กก.', barcode: '885022334455', category: 'อาหาร', cost_price: 150, selling_price: 185, stock: 45, low_stock_alert: 10, image_url: '' },
-  ],
-  addProduct: (product) => set((state) => ({
-    products: [{ ...product, id: Date.now().toString() }, ...state.products]
-  })),
-  updateProduct: (id, product) => set((state) => ({
-    products: state.products.map(p => p.id === id ? { ...p, ...product } : p)
-  })),
-  deleteProduct: (id) => set((state) => ({
-    products: state.products.filter(p => p.id !== id)
-  })),
-  adjustStock: (id, amount) => set((state) => ({
-    products: state.products.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + amount) } : p)
-  })),
-  setStock: (id, amount) => set((state) => ({
-    products: state.products.map(p => p.id === id ? { ...p, stock: Math.max(0, amount) } : p)
-  })),
-  addCategory: (name) => set((state) => ({
-    categories: [...state.categories, { id: Date.now().toString(), name }]
-  })),
-  updateCategory: (id, name) => set((state) => ({
-    categories: state.categories.map(c => c.id === id ? { ...c, name } : c)
-  })),
-  deleteCategory: (id) => set((state) => ({
-    categories: state.categories.filter(c => c.id !== id)
-  }))
+export const useProductStore = create<ProductState>((set, get) => ({
+  products: [],
+  categories: [], // Should also be fetched from service
+  isLoading: false,
+  error: null,
+
+  fetchProducts: async () => {
+    set({ isLoading: true });
+    try {
+      const products = await ProductService.getAll();
+      set({ products, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  addProduct: async (product) => {
+    try {
+      const newProduct = await ProductService.create(product);
+      set((state) => ({ products: [newProduct, ...state.products] }));
+    } catch (error: any) {
+      set({ error: error.message });
+    }
+  },
+
+  updateProduct: async (id, productData) => {
+    try {
+      const updated = await ProductService.update(id, productData);
+      set((state) => ({
+        products: state.products.map((p) => (p.id === id ? updated : p)),
+      }));
+    } catch (error: any) {
+      set({ error: error.message });
+    }
+  },
+
+  deleteProduct: async (id) => {
+    try {
+      await ProductService.delete(id);
+      set((state) => ({
+        products: state.products.filter((p) => p.id !== id),
+      }));
+    } catch (error: any) {
+      set({ error: error.message });
+    }
+  },
+
+  adjustStock: async (id, amount) => {
+    const product = get().products.find((p) => p.id === id);
+    if (!product) return;
+
+    const newStock = Math.max(0, product.stock + amount);
+    await get().updateProduct(id, { stock: newStock });
+  },
 }));
