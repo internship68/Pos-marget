@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { API_URL } from '../lib/services/api';
 
 export interface UserProfile {
     id: string;
@@ -19,7 +20,7 @@ interface UserState {
     deleteUser: (id: string) => Promise<void>;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 
 export const useUserStore = create<UserState>((set, get) => ({
     users: [],

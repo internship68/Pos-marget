@@ -1,41 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { SalesService } from '@/lib/services/sales.service';
+import type { Sale, SalesSummary } from '@/lib/services/sales.service';
 import { TrendingUp, TrendingDown, Zap, Calendar, Download, Eye, Wallet, ShoppingCart, FileText, X, Printer, Loader2, Ban } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-interface SaleItem {
-  id: string;
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
-
-interface Sale {
-  id: string;
-  receipt_number: string;
-  cashier_name: string;
-  subtotal: number;
-  discount: number;
-  total: number;
-  payment_method: string;
-  status: string;
-  created_at: string;
-  items: SaleItem[];
-}
-
-interface Summary {
-  todayRevenue: number;
-  todayCount: number;
-  totalRevenue: number;
-  totalCount: number;
-}
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Sale[]>([]);
-  const [summary, setSummary] = useState<Summary>({ todayRevenue: 0, todayCount: 0, totalRevenue: 0, totalCount: 0 });
+  const [summary, setSummary] = useState<SalesSummary>({ todayRevenue: 0, todayCount: 0, totalRevenue: 0, totalCount: 0 });
   const [selectedTx, setSelectedTx] = useState<Sale | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -43,12 +15,12 @@ export default function TransactionsPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [salesRes, summaryRes] = await Promise.all([
-        fetch(`${API_URL}/sales${filterStatus !== 'all' ? `?status=${filterStatus}` : ''}`),
-        fetch(`${API_URL}/sales/summary`),
+      const [salesData, summaryData] = await Promise.all([
+        SalesService.getAll({ status: filterStatus }),
+        SalesService.getSummary(),
       ]);
-      if (salesRes.ok) setTransactions(await salesRes.json());
-      if (summaryRes.ok) setSummary(await summaryRes.json());
+      setTransactions(salesData);
+      setSummary(summaryData);
     } catch (err) {
       console.error('Failed to fetch sales data', err);
     } finally {
@@ -63,11 +35,9 @@ export default function TransactionsPage() {
   const handleCancel = async (id: string) => {
     if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกบิลนี้? สต็อกจะถูกคืนกลับ')) return;
     try {
-      const res = await fetch(`${API_URL}/sales/${id}/cancel`, { method: 'PATCH' });
-      if (res.ok) {
-        fetchData();
-        setSelectedTx(null);
-      }
+      await SalesService.cancel(id);
+      fetchData();
+      setSelectedTx(null);
     } catch (err) {
       alert('ไม่สามารถยกเลิกบิลได้');
     }

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase/client';
+import { API_URL } from '../lib/services/api';
 
 export interface UserProfile {
   id: string;
@@ -19,7 +20,7 @@ interface AuthState {
   checkSession: () => Promise<void>;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,

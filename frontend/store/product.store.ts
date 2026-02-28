@@ -1,24 +1,8 @@
 import { create } from 'zustand';
+import { ProductService, CategoryService } from '@/lib/services/product.service';
+import type { Product, Category } from '@/lib/services/product.service';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-export interface Product {
-  id: string;
-  name: string;
-  barcode: string | null;
-  category_id: string | null;
-  category: { id: string; name: string } | null;
-  cost_price: number;
-  selling_price: number;
-  stock: number;
-  low_stock_alert: number;
-  image_url: string | null;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-}
+export type { Product, Category };
 
 interface ProductState {
   products: Product[];
@@ -48,9 +32,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
   fetchProducts: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetch(`${API_URL}/products`);
-      if (!res.ok) throw new Error('Failed to fetch products');
-      const products = await res.json();
+      const products = await ProductService.getAll();
       set({ products, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
@@ -59,9 +41,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   fetchCategories: async () => {
     try {
-      const res = await fetch(`${API_URL}/categories`);
-      if (!res.ok) throw new Error('Failed to fetch categories');
-      const categories = await res.json();
+      const categories = await CategoryService.getAll();
       set({ categories });
     } catch (error: any) {
       set({ error: error.message });
@@ -70,13 +50,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   addProduct: async (product) => {
     try {
-      const res = await fetch(`${API_URL}/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(product),
-      });
-      if (!res.ok) throw new Error('Failed to create product');
-      const newProduct = await res.json();
+      const newProduct = await ProductService.create(product);
       set((state) => ({ products: [newProduct, ...state.products] }));
     } catch (error: any) {
       set({ error: error.message });
@@ -86,13 +60,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   updateProduct: async (id, productData) => {
     try {
-      const res = await fetch(`${API_URL}/products/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productData),
-      });
-      if (!res.ok) throw new Error('Failed to update product');
-      const updated = await res.json();
+      const updated = await ProductService.update(id, productData);
       set((state) => ({
         products: state.products.map((p) => (p.id === id ? updated : p)),
       }));
@@ -104,8 +72,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   deleteProduct: async (id) => {
     try {
-      const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete product');
+      await ProductService.delete(id);
       set((state) => ({
         products: state.products.filter((p) => p.id !== id),
       }));
@@ -128,13 +95,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   addCategory: async (categoryData) => {
     try {
-      const res = await fetch(`${API_URL}/categories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(categoryData),
-      });
-      if (!res.ok) throw new Error('Failed to create category');
-      const newCategory = await res.json();
+      const newCategory = await CategoryService.create(categoryData);
       set((state) => ({ categories: [...state.categories, newCategory] }));
     } catch (error: any) {
       set({ error: error.message });
@@ -144,13 +105,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   updateCategory: async (id, name) => {
     try {
-      const res = await fetch(`${API_URL}/categories/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error('Failed to update category');
-      const updated = await res.json();
+      const updated = await CategoryService.update(id, { name });
       set((state) => ({
         categories: state.categories.map((c) => (c.id === id ? updated : c)),
       }));
@@ -162,8 +117,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   deleteCategory: async (id) => {
     try {
-      const res = await fetch(`${API_URL}/categories/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete category');
+      await CategoryService.delete(id);
       set((state) => ({
         categories: state.categories.filter((c) => c.id !== id),
       }));

@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useProductStore } from '@/store/product.store';
 import { Calendar, Download, TrendingUp, Wallet, Package, AlertTriangle, ShoppingCart } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { SalesService } from '@/lib/services/sales.service';
 
 export default function DashboardPage() {
   const { products, categories, fetchProducts, fetchCategories } = useProductStore();
@@ -13,7 +12,7 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-    fetch(`${API_URL}/sales/summary`).then(r => r.json()).then(setSalesSummary).catch(() => { });
+    SalesService.getSummary().then(setSalesSummary).catch(() => { });
   }, [fetchProducts, fetchCategories]);
 
   const lowStockProducts = products.filter(p => p.stock <= p.low_stock_alert);

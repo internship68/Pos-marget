@@ -1,30 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { SalesService } from '@/lib/services/sales.service';
+import type { Sale } from '@/lib/services/sales.service';
 import { Search, Eye, FileText, X, Printer, Loader2, ShoppingBag, Calendar } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-interface SaleItem {
-  id: string;
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
-
-interface Sale {
-  id: string;
-  receipt_number: string;
-  cashier_name: string;
-  subtotal: number;
-  discount: number;
-  total: number;
-  payment_method: string;
-  status: string;
-  created_at: string;
-  items: SaleItem[];
-}
 
 export default function HistoryPage() {
   const [transactions, setTransactions] = useState<Sale[]>([]);
@@ -36,8 +15,8 @@ export default function HistoryPage() {
     const fetchSales = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`${API_URL}/sales`);
-        if (res.ok) setTransactions(await res.json());
+        const data = await SalesService.getAll();
+        setTransactions(data);
       } catch (err) {
         console.error('Failed to fetch sales', err);
       } finally {

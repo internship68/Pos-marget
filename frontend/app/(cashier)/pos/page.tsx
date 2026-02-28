@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { usePosStore } from '@/store/pos.store';
 import { useProductStore } from '@/store/product.store';
 import { useAuthStore } from '@/store/auth.store';
+import { SalesService } from '@/lib/services/sales.service';
 import { Search, Grid, ShoppingCart, Trash2, Minus, Plus, Edit, Banknote, Building, CheckCircle, AlertTriangle, Package, Coffee, Loader2, Receipt } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function PosPage() {
   const { products, categories, fetchProducts, fetchCategories } = useProductStore();
@@ -51,18 +50,7 @@ export default function PosPage() {
         })),
       };
 
-      const res = await fetch(`${API_URL}/sales`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(saleData),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'ไม่สามารถบันทึกการขายได้');
-      }
-
-      const sale = await res.json();
+      const sale = await SalesService.create(saleData);
       setShowReceipt(sale);
       clearCart();
       // refresh products เพื่ออัปเดตสต็อก
