@@ -18,40 +18,35 @@ export class ProductsService {
             where: { id },
             include: { category: true },
         });
-
         if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
         return product;
     }
 
     async create(dto: CreateProductDto) {
-        // Map DTO to prisma fields
-        const { category_id, price, ...rest } = dto;
+        const { category_id, ...rest } = dto;
         return this.prisma.product.create({
             data: {
                 ...rest,
-                // Using selling_price since it's the more semantic name in our schema
-                selling_price: price || 0,
                 category: category_id ? { connect: { id: category_id } } : undefined,
             },
+            include: { category: true },
         });
     }
 
     async update(id: string, dto: UpdateProductDto) {
-        const { category_id, price, ...rest } = dto;
+        const { category_id, ...rest } = dto;
         return this.prisma.product.update({
             where: { id },
             data: {
                 ...rest,
-                selling_price: price,
                 category: category_id ? { connect: { id: category_id } } : undefined,
             },
+            include: { category: true },
         });
     }
 
     async remove(id: string) {
-        await this.prisma.product.delete({
-            where: { id },
-        });
+        await this.prisma.product.delete({ where: { id } });
         return { deleted: true };
     }
 }

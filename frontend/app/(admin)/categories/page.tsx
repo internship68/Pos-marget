@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, Edit, Trash2, Tags } from 'lucide-react';
 import { useProductStore } from '@/store/product.store';
 
 export default function CategoriesPage() {
-  const { categories, addCategory, updateCategory, deleteCategory } = useProductStore();
+  const { categories, fetchCategories, addCategory, updateCategory, deleteCategory } = useProductStore();
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleOpenModal = (category?: { id: string, name: string }) => {
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const handleOpenModal = (category?: { id: string; name: string }) => {
     if (category) {
       setEditingId(category.id);
       setCategoryName(category.name);
@@ -21,20 +26,26 @@ export default function CategoriesPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!categoryName.trim()) return;
-
-    if (editingId) {
-      updateCategory(editingId, categoryName);
-    } else {
-      addCategory({ name: categoryName });
+    setIsLoading(true);
+    try {
+      if (editingId) {
+        await updateCategory(editingId, categoryName);
+      } else {
+        await addCategory({ name: categoryName });
+      }
+      setShowModal(false);
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setIsLoading(false);
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบหมวดหมู่นี้?')) {
-      deleteCategory(id);
+      await deleteCategory(id);
     }
   };
 
@@ -123,6 +134,7 @@ export default function CategoriesPage() {
                 placeholder="เช่น เครื่องดื่ม, อาหาร, ของใช้"
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                 autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
               />
             </div>
             <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 bg-slate-50 dark:bg-slate-800/50">
@@ -134,10 +146,10 @@ export default function CategoriesPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!categoryName.trim()}
+                disabled={!categoryName.trim() || isLoading}
                 className="px-4 py-2 text-sm font-semibold bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                บันทึกข้อมูล
+                {isLoading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
               </button>
             </div>
           </div>

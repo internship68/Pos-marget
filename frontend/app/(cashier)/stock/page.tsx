@@ -1,17 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProductStore } from '@/store/product.store';
 import { Search, Package, AlertTriangle, Coffee } from 'lucide-react';
 
 export default function CashierStockPage() {
-  const { products, categories } = useProductStore();
+  const { products, categories, fetchProducts, fetchCategories } = useProductStore();
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const filteredProducts = products.filter(p => {
-    const matchCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.barcode.includes(searchQuery);
+    const matchCategory = selectedCategory === 'all' || p.category_id === selectedCategory;
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.barcode && p.barcode.includes(searchQuery));
     return matchCategory && matchSearch;
   });
 
@@ -44,7 +49,7 @@ export default function CashierStockPage() {
           >
             <option value="all">ทุกหมวดหมู่</option>
             {categories.map(c => (
-              <option key={c.id} value={c.name}>{c.name}</option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>
@@ -80,12 +85,12 @@ export default function CashierStockPage() {
                           </div>
                           <div>
                             <p className="font-semibold text-slate-900 dark:text-white">{product.name}</p>
-                            <p className="text-xs text-slate-500">{product.barcode}</p>
+                            <p className="text-xs text-slate-500">{product.barcode ?? '-'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 text-slate-600 dark:text-slate-400">{product.category}</td>
-                      <td className="p-4 text-right font-medium">฿{product.selling_price.toFixed(2)}</td>
+                      <td className="p-4 text-slate-600 dark:text-slate-400">{product.category?.name ?? '-'}</td>
+                      <td className="p-4 text-right font-medium">฿{Number(product.selling_price).toFixed(2)}</td>
                       <td className="p-4 text-right font-bold text-slate-900 dark:text-white">{product.stock}</td>
                       <td className="p-4 text-center">
                         {isOutOfStock ? (

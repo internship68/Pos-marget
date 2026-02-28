@@ -7,6 +7,9 @@ import { ProductsModule } from './products/products.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { CategoriesModule } from './categories/categories.module';
+import { UploadModule } from './upload/upload.module';
+import { SalesModule } from './sales/sales.module';
 
 @Module({
   imports: [
@@ -18,8 +21,12 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     UsersModule,
     PrismaModule,
+    CategoriesModule,
+    UploadModule,
+    SalesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+

@@ -1,17 +1,21 @@
 export class CreateProductDto {
     name: string;
-    description?: string;
-    price: number;
-    stock: number;
+    barcode?: string;
+    cost_price?: number;
+    selling_price: number;
+    stock?: number;
+    low_stock_alert?: number;
     category_id?: string;
     image_url?: string;
 }
 
 export class UpdateProductDto {
     name?: string;
-    description?: string;
-    price?: number;
+    barcode?: string;
+    cost_price?: number;
+    selling_price?: number;
     stock?: number;
+    low_stock_alert?: number;
     category_id?: string;
     image_url?: string;
 }
