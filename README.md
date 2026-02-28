@@ -18,3 +18,4 @@ View your app in AI Studio: https://ai.studio/apps/68bed50e-3138-4c06-80b6-55ac7
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+# Pos-marget
