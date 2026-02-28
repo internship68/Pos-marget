@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useProductStore } from '@/frontend/store/product.store';
+import { useProductStore } from '@/store/product.store';
 import { Search, Package, AlertTriangle, Coffee } from 'lucide-react';
 
 export default function CashierStockPage() {
@@ -29,15 +29,15 @@ export default function CashierStockPage() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="ค้นหาชื่อสินค้า หรือ บาร์โค้ด..." 
+            <input
+              type="text"
+              placeholder="ค้นหาชื่อสินค้า หรือ บาร์โค้ด..."
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <select 
+          <select
             className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}

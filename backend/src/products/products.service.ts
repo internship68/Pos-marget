@@ -1,68 +1,57 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { SupabaseService } from '../supabase/supabase.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
 
 @Injectable()
 export class ProductsService {
-    private readonly TABLE_NAME = 'products';
-
-    constructor(private readonly supabaseService: SupabaseService) { }
-
-    private get client() {
-        return this.supabaseService.getClient();
-    }
+    constructor(private readonly prisma: PrismaService) { }
 
     async findAll() {
-        const { data, error } = await this.client
-            .from(this.TABLE_NAME)
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data;
+        return this.prisma.product.findMany({
+            include: { category: true },
+            orderBy: { created_at: 'desc' },
+        });
     }
 
     async findOne(id: string) {
-        const { data, error } = await this.client
-            .from(this.TABLE_NAME)
-            .select('*')
-            .eq('id', id)
-            .single();
+        const product = await this.prisma.product.findUnique({
+            where: { id },
+            include: { category: true },
+        });
 
-        if (error) throw new NotFoundException(`Product with ID ${id} not found`);
-        return data;
+        if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
+        return product;
     }
 
-    async create(createProductDto: CreateProductDto) {
-        const { data, error } = await this.client
-            .from(this.TABLE_NAME)
-            .insert(createProductDto)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
+    async create(dto: CreateProductDto) {
+        // Map DTO to prisma fields
+        const { category_id, price, ...rest } = dto;
+        return this.prisma.product.create({
+            data: {
+                ...rest,
+                // Using selling_price since it's the more semantic name in our schema
+                selling_price: price || 0,
+                category: category_id ? { connect: { id: category_id } } : undefined,
+            },
+        });
     }
 
-    async update(id: string, updateProductDto: UpdateProductDto) {
-        const { data, error } = await this.client
-            .from(this.TABLE_NAME)
-            .update(updateProductDto)
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
+    async update(id: string, dto: UpdateProductDto) {
+        const { category_id, price, ...rest } = dto;
+        return this.prisma.product.update({
+            where: { id },
+            data: {
+                ...rest,
+                selling_price: price,
+                category: category_id ? { connect: { id: category_id } } : undefined,
+            },
+        });
     }
 
     async remove(id: string) {
-        const { error } = await this.client
-            .from(this.TABLE_NAME)
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
+        await this.prisma.product.delete({
+            where: { id },
+        });
         return { deleted: true };
     }
 }

@@ -1,23 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, Search, Package, AlertTriangle, Wallet, Tag, Edit, PlusSquare, Image as ImageIcon, Trash2, X } from 'lucide-react';
-import { useProductStore } from '@/frontend/store/product.store';
-import { Product } from '@/frontend/store/pos.store';
+import { useProductStore } from '@/store/product.store';
+import { Product } from '@/store/pos.store';
 
 export default function ProductsPage() {
-  const { products, categories, addProduct, updateProduct, deleteProduct, adjustStock, setStock } = useProductStore();
-  
+  const { products, categories, addProduct, updateProduct, deleteProduct, adjustStock, setStock, fetchProducts } = useProductStore();
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
   // Modals state
   const [showProductModal, setShowProductModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
-  
+
   // Form state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<Partial<Product>>({
     name: '', barcode: '', category: '', cost_price: 0, selling_price: 0, stock: 0, low_stock_alert: 10, image_url: ''
   });
-  
+
   // Stock state
   const [selectedProductForStock, setSelectedProductForStock] = useState<Product | null>(null);
   const [stockAmount, setStockAmount] = useState<number>(0);
@@ -30,8 +34,8 @@ export default function ProductsPage() {
 
   // Derived data
   const filteredProducts = products.filter(p => {
-    const matchCategory = filterCategory === 'all' || 
-                          (filterCategory === 'low_stock' ? p.stock <= p.low_stock_alert : p.category === filterCategory);
+    const matchCategory = filterCategory === 'all' ||
+      (filterCategory === 'low_stock' ? p.stock <= p.low_stock_alert : p.category === filterCategory);
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.barcode.includes(searchQuery);
     return matchCategory && matchSearch;
   });
@@ -55,7 +59,7 @@ export default function ProductsPage() {
 
   const handleSaveProduct = () => {
     if (!formData.name || !formData.barcode) return alert('กรุณากรอกชื่อและบาร์โค้ด');
-    
+
     if (editingProduct) {
       updateProduct(editingProduct.id, formData);
     } else {
@@ -80,7 +84,7 @@ export default function ProductsPage() {
 
   const handleSaveStock = () => {
     if (!selectedProductForStock) return;
-    
+
     if (stockAction === 'increase') {
       adjustStock(selectedProductForStock.id, stockAmount);
     } else if (stockAction === 'decrease') {
@@ -143,14 +147,14 @@ export default function ProductsPage() {
       {/* Filters & Search */}
       <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
         <div className="flex gap-3 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto no-scrollbar">
-          <button 
+          <button
             onClick={() => setFilterCategory('all')}
             className={`flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${filterCategory === 'all' ? 'bg-primary text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}
           >
             ทั้งหมด
           </button>
           {categories.map(cat => (
-            <button 
+            <button
               key={cat.id}
               onClick={() => setFilterCategory(cat.name)}
               className={`flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${filterCategory === cat.name ? 'bg-primary text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}
@@ -158,7 +162,7 @@ export default function ProductsPage() {
               {cat.name}
             </button>
           ))}
-          <button 
+          <button
             onClick={() => setFilterCategory('low_stock')}
             className={`flex shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${filterCategory === 'low_stock' ? 'bg-red-500 text-white' : 'bg-white dark:bg-slate-900 border border-red-200 text-red-500 hover:bg-red-50'}`}
           >
@@ -169,15 +173,15 @@ export default function ProductsPage() {
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ค้นหาชื่อสินค้า หรือ บาร์โค้ด..." 
+              placeholder="ค้นหาชื่อสินค้า หรือ บาร์โค้ด..."
               className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-primary focus:border-primary"
             />
           </div>
-          <button 
+          <button
             onClick={() => handleOpenProductModal()}
             className="flex items-center justify-center gap-2 rounded-lg bg-primary text-white px-4 py-2 text-sm font-medium hover:bg-primary/90"
           >
@@ -255,23 +259,23 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-2">
-                      <button 
+                      <button
                         onClick={() => handleOpenProductModal(product)}
                         className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500"
                         title="แก้ไขสินค้า"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleOpenStockModal(product)}
-                        className="p-1.5 rounded hover:bg-primary/10 transition-colors text-primary" 
+                        className="p-1.5 rounded hover:bg-primary/10 transition-colors text-primary"
                         title="จัดการสต็อก"
                       >
                         <PlusSquare className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => setDeleteConfirmId(product.id)}
-                        className="p-1.5 rounded hover:bg-red-50 transition-colors text-red-500" 
+                        className="p-1.5 rounded hover:bg-red-50 transition-colors text-red-500"
                         title="ลบสินค้า"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -297,7 +301,7 @@ export default function ProductsPage() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               {/* Image Upload */}
               <div className="flex flex-col items-center justify-center gap-4">
@@ -310,9 +314,9 @@ export default function ProductsPage() {
                       <span className="text-xs font-medium">อัปโหลดรูปภาพ</span>
                     </div>
                   )}
-                  <input 
-                    type="file" 
-                    accept="image/*" 
+                  <input
+                    type="file"
+                    accept="image/*"
                     onChange={handleImageUpload}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
@@ -327,27 +331,27 @@ export default function ProductsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">ชื่อสินค้า <span className="text-red-500">*</span></label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">บาร์โค้ด <span className="text-red-500">*</span></label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={formData.barcode}
-                    onChange={e => setFormData({...formData, barcode: e.target.value})}
+                    onChange={e => setFormData({ ...formData, barcode: e.target.value })}
                     className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary font-mono"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">หมวดหมู่</label>
-                  <select 
+                  <select
                     value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary"
                   >
                     <option value="">เลือกหมวดหมู่</option>
@@ -358,47 +362,47 @@ export default function ProductsPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">แจ้งเตือนสต็อกต่ำ</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={formData.low_stock_alert}
-                    onChange={e => setFormData({...formData, low_stock_alert: Number(e.target.value)})}
+                    onChange={e => setFormData({ ...formData, low_stock_alert: Number(e.target.value) })}
                     className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">ต้นทุน (บาท)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.01"
                     value={formData.cost_price}
-                    onChange={e => setFormData({...formData, cost_price: Number(e.target.value)})}
+                    onChange={e => setFormData({ ...formData, cost_price: Number(e.target.value) })}
                     className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">ราคาขาย (บาท)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     step="0.01"
                     value={formData.selling_price}
-                    onChange={e => setFormData({...formData, selling_price: Number(e.target.value)})}
+                    onChange={e => setFormData({ ...formData, selling_price: Number(e.target.value) })}
                     className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 {!editingProduct && (
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">สต็อกเริ่มต้น</label>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       value={formData.stock}
-                      onChange={e => setFormData({...formData, stock: Number(e.target.value)})}
+                      onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
                       className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 )}
               </div>
             </div>
-            
+
             <div className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
               <button onClick={() => setShowProductModal(false)} className="px-6 py-2 text-slate-600 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
                 ยกเลิก
@@ -441,19 +445,19 @@ export default function ProductsPage() {
 
               <div className="space-y-4">
                 <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                  <button 
+                  <button
                     onClick={() => setStockAction('increase')}
                     className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${stockAction === 'increase' ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
                   >
                     เพิ่มสต็อก
                   </button>
-                  <button 
+                  <button
                     onClick={() => setStockAction('decrease')}
                     className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${stockAction === 'decrease' ? 'bg-white dark:bg-slate-700 shadow-sm text-rose-600' : 'text-slate-500 hover:text-slate-700'}`}
                   >
                     ลดสต็อก
                   </button>
-                  <button 
+                  <button
                     onClick={() => setStockAction('set')}
                     className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${stockAction === 'set' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                   >
@@ -465,45 +469,43 @@ export default function ProductsPage() {
                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                     {stockAction === 'increase' ? 'จำนวนที่ต้องการเพิ่ม' : stockAction === 'decrease' ? 'จำนวนที่ต้องการลด' : 'ยอดสต็อกที่ถูกต้อง'}
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min="0"
                     value={stockAmount}
                     onChange={e => setStockAmount(Math.max(0, Number(e.target.value)))}
                     className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-primary text-lg font-bold"
                   />
                 </div>
-                
+
                 {stockAmount > 0 && (
-                  <div className={`p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${
-                    stockAction === 'increase' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
-                    stockAction === 'decrease' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 
-                    'bg-blue-50 text-blue-700 border border-blue-200'
-                  }`}>
+                  <div className={`p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${stockAction === 'increase' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                    stockAction === 'decrease' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                      'bg-blue-50 text-blue-700 border border-blue-200'
+                    }`}>
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>สต็อกใหม่จะเป็น: {
                       stockAction === 'increase' ? selectedProductForStock.stock + stockAmount :
-                      stockAction === 'decrease' ? Math.max(0, selectedProductForStock.stock - stockAmount) :
-                      stockAmount
+                        stockAction === 'decrease' ? Math.max(0, selectedProductForStock.stock - stockAmount) :
+                          stockAmount
                     } หน่วย</span>
                   </div>
                 )}
               </div>
             </div>
             <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 bg-slate-50 dark:bg-slate-800/50">
-              <button 
+              <button
                 onClick={() => setShowStockModal(false)}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
               >
                 ยกเลิก
               </button>
-              <button 
+              <button
                 onClick={handleSaveStock}
-                className={`px-6 py-2 text-sm font-semibold text-white rounded-lg transition-colors shadow-sm ${
-                  stockAction === 'increase' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                className={`px-6 py-2 text-sm font-semibold text-white rounded-lg transition-colors shadow-sm ${stockAction === 'increase' ? 'bg-emerald-600 hover:bg-emerald-700' :
                   stockAction === 'decrease' ? 'bg-rose-600 hover:bg-rose-700' :
-                  'bg-blue-600 hover:bg-blue-700'
-                }`}
+                    'bg-blue-600 hover:bg-blue-700'
+                  }`}
               >
                 ยืนยันการปรับสต็อก
               </button>
@@ -522,14 +524,14 @@ export default function ProductsPage() {
             <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">ยืนยันการลบสินค้า</h3>
             <p className="text-slate-500 dark:text-slate-400 mb-6">คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้? การกระทำนี้ไม่สามารถเรียกคืนได้</p>
             <div className="flex gap-3">
-              <button 
-                onClick={() => setDeleteConfirmId(null)} 
+              <button
+                onClick={() => setDeleteConfirmId(null)}
                 className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 ยกเลิก
               </button>
-              <button 
-                onClick={confirmDelete} 
+              <button
+                onClick={confirmDelete}
                 className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors shadow-md shadow-red-500/20"
               >
                 ลบสินค้า

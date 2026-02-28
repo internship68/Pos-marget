@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useProductStore } from '@/frontend/store/product.store';
+import { useProductStore } from '@/store/product.store';
 import { Calendar, Download, TrendingUp, Wallet, ShoppingCart, AlertTriangle, Coffee, Cake, Utensils } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -91,7 +91,7 @@ export default function DashboardPage() {
               <option>สัปดาห์ที่แล้ว</option>
             </select>
           </div>
-          
+
           {/* Placeholder for Line Chart */}
           <div className="relative h-[300px] w-full bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex items-end justify-between p-6 overflow-hidden">
             <div className="w-10 bg-primary/20 rounded-t h-20 relative group hover:bg-primary transition-colors cursor-pointer"></div>

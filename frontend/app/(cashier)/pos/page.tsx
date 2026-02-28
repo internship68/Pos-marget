@@ -1,15 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePosStore } from '@/frontend/store/pos.store';
-import { useProductStore } from '@/frontend/store/product.store';
+import { usePosStore } from '@/store/pos.store';
+import { useProductStore } from '@/store/product.store';
 import { Search, Grid, Coffee, Utensils, Cake, IceCream, ShoppingCart, Trash2, Minus, Plus, Edit, Banknote, Building, Upload, CheckCircle, AlertTriangle, Package } from 'lucide-react';
 
 export default function PosPage() {
-  const { products, categories } = useProductStore();
+  const { products, categories, fetchProducts } = useProductStore();
   const { cart, addToCart, removeFromCart, updateQuantity, getCartTotal, getNetAmount, discount, setDiscount, clearCart } = usePosStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const filteredProducts = products.filter(p => {
     const matchCategory = selectedCategory === 'all' || p.category === selectedCategory;
@@ -19,7 +23,7 @@ export default function PosPage() {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    
+
     // Mock checkout process
     alert('บันทึกการขายสำเร็จ! กำลังพิมพ์ใบเสร็จ...');
     clearCart();
@@ -33,9 +37,9 @@ export default function PosPage() {
         <div className="p-4 bg-white dark:bg-slate-900/50">
           <div className="relative group">
             <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
-            <input 
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary text-lg" 
-              placeholder="ค้นหาสินค้า หรือ สแกนบาร์โค้ด..." 
+            <input
+              className="w-full pl-12 pr-4 py-3.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary text-lg"
+              placeholder="ค้นหาสินค้า หรือ สแกนบาร์โค้ด..."
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -45,7 +49,7 @@ export default function PosPage() {
 
         {/* Categories */}
         <div className="px-4 pb-2 flex gap-3 overflow-x-auto no-scrollbar">
-          <button 
+          <button
             onClick={() => setSelectedCategory('all')}
             className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${selectedCategory === 'all' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
           >
@@ -53,7 +57,7 @@ export default function PosPage() {
             ทั้งหมด
           </button>
           {categories.map(cat => (
-            <button 
+            <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.name)}
               className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${selectedCategory === cat.name ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
@@ -71,13 +75,12 @@ export default function PosPage() {
             const isLowStock = product.stock <= product.low_stock_alert && !isOutOfStock;
 
             return (
-              <button 
+              <button
                 key={product.id}
                 onClick={() => addToCart(product)}
                 disabled={isOutOfStock}
-                className={`group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm transition-all text-left flex flex-col h-48 ${
-                  isOutOfStock ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-md hover:ring-2 hover:ring-primary'
-                } ${isLowStock ? 'ring-1 ring-red-400 dark:ring-red-500/50' : ''}`}
+                className={`group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm transition-all text-left flex flex-col h-48 ${isOutOfStock ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:shadow-md hover:ring-2 hover:ring-primary'
+                  } ${isLowStock ? 'ring-1 ring-red-400 dark:ring-red-500/50' : ''}`}
               >
                 {/* Visual Alerts for Stock */}
                 {isOutOfStock && (
@@ -116,7 +119,7 @@ export default function PosPage() {
             <ShoppingCart className="w-5 h-5 text-primary" />
             รายการสั่งซื้อ
           </h2>
-          <button 
+          <button
             onClick={clearCart}
             className="text-slate-500 hover:text-red-500 transition-colors"
           >
@@ -143,14 +146,14 @@ export default function PosPage() {
                     <p className="text-xs text-slate-500">฿{item.selling_price.toFixed(2)} / ชิ้น</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button 
+                    <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       className="w-7 h-7 flex items-center justify-center rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
                     <span className="w-6 text-center font-bold">{item.quantity}</span>
-                    <button 
+                    <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       className="w-7 h-7 flex items-center justify-center rounded bg-primary text-white"
                     >
@@ -176,9 +179,9 @@ export default function PosPage() {
             <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
               <span>ส่วนลด</span>
               <div className="flex items-center gap-2">
-                <input 
-                  className="w-20 text-right py-1 px-2 rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-primary" 
-                  placeholder="0.00" 
+                <input
+                  className="w-20 text-right py-1 px-2 rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-primary"
+                  placeholder="0.00"
                   type="number"
                   value={discount || ''}
                   onChange={(e) => setDiscount(Number(e.target.value))}
@@ -213,7 +216,7 @@ export default function PosPage() {
           </div>
 
           {/* Final Action */}
-          <button 
+          <button
             onClick={handleCheckout}
             disabled={cart.length === 0}
             className="w-full py-4 bg-primary text-white rounded-xl font-bold text-lg shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"

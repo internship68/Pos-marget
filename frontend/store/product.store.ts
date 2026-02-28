@@ -19,11 +19,22 @@ interface ProductState {
 
   // Local state methods (if needed for performance, but should usually sync with DB)
   adjustStock: (id: string, amount: number) => Promise<void>;
+  setStock: (id: string, amount: number) => Promise<void>;
+
+  // Category management
+  addCategory: (category: Omit<Category, 'id'>) => void;
+  updateCategory: (id: string, name: string) => void;
+  deleteCategory: (id: string) => void;
 }
 
 export const useProductStore = create<ProductState>((set, get) => ({
   products: [],
-  categories: [], // Should also be fetched from service
+  categories: [
+    { id: '1', name: 'อาหาร' },
+    { id: '2', name: 'เครื่องดื่ม' },
+    { id: '3', name: 'ขนม' },
+    { id: '4', name: 'ของใช้' },
+  ],
   isLoading: false,
   error: null,
 
@@ -74,5 +85,29 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
     const newStock = Math.max(0, product.stock + amount);
     await get().updateProduct(id, { stock: newStock });
+  },
+
+  setStock: async (id, amount) => {
+    await get().updateProduct(id, { stock: Math.max(0, amount) });
+  },
+
+  addCategory: (categoryData) => {
+    const newCategory: Category = {
+      id: Math.random().toString(36).substring(2, 9),
+      ...categoryData,
+    };
+    set((state) => ({ categories: [...state.categories, newCategory] }));
+  },
+
+  updateCategory: (id, name) => {
+    set((state) => ({
+      categories: state.categories.map((c) => (c.id === id ? { ...c, name } : c)),
+    }));
+  },
+
+  deleteCategory: (id) => {
+    set((state) => ({
+      categories: state.categories.filter((c) => c.id !== id),
+    }));
   },
 }));

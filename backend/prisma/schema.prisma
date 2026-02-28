@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  full_name  String?
+  role       String   @default("cashier")
+  created_at DateTime @default(now())
+
+  @@map("profiles")
+}
+
+model Category {
+  id         String    @id @default(uuid())
+  name       String    @unique
+  products   Product[]
+  created_at DateTime  @default(now())
+
+  @@map("categories")
+}
+
+model Product {
+  id              String    @id @default(uuid())
+  name            String
+  barcode         String?   @unique
+  category_id     String?
+  category        Category? @relation(fields: [category_id], references: [id])
+  cost_price      Decimal?  @db.Decimal(10, 2)
+  selling_price   Decimal   @db.Decimal(10, 2)
+  stock           Int       @default(0)
+  low_stock_alert Int       @default(5)
+  image_url       String?
+  created_at      DateTime  @default(now())
+
+  @@map("products")
+}
