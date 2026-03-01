@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: pos-market-api
+    runtime: node
+    region: singapore
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production

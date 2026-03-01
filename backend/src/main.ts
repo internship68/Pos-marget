@@ -8,17 +8,21 @@ async function bootstrap() {
   app.use(require('express').json({ limit: '10mb' }));
   app.use(require('express').urlencoded({ extended: true, limit: '10mb' }));
 
+  // Enable CORS — ใช้ CORS_ORIGINS env var สำหรับ production
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+    : ['*'];
 
-  // Enable CORS so the Next.js frontend can call the API
   app.enableCors({
-    origin: '*', // For development. Should be restricted to local/production URL in prod.
+    origin: allowedOrigins.includes('*') ? true : allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
+    credentials: true,
   });
 
   const port = process.env.PORT || 3001;
-  await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Application is running on port: ${port}`);
 }
 bootstrap();
