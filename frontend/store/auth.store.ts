@@ -1,11 +1,13 @@
-import { create } from 'zustand';
-import { supabase } from '../lib/supabase/client';
-import { API_URL } from '../lib/services/api';
+import { create } from "zustand";
+import { API_URL } from "../lib/services/api";
+
+const DEMO_AUTH_STORAGE_KEY = "demo.auth.user";
+export const DEMO_AUTH_ENABLED = process.env.NEXT_PUBLIC_DEMO_AUTH !== "false";
 
 export interface UserProfile {
   id: string;
   email: string;
-  role: 'admin' | 'cashier';
+  role: "admin" | "cashier";
   name: string;
 }
 
@@ -20,8 +22,6 @@ interface AuthState {
   checkSession: () => Promise<void>;
 }
 
-
-
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: false,
@@ -31,23 +31,38 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     set({ isLoading: true, error: null });
+    if (DEMO_AUTH_ENABLED) {
+      const role: UserProfile["role"] = email.toLowerCase().includes("admin")
+        ? "admin"
+        : "cashier";
+      const user: UserProfile = {
+        id: `demo-${role}`,
+        email: email || `demo.${role}@example.com`,
+        role,
+        name: role === "admin" ? "Demo Admin" : "Demo Cashier",
+      };
+      localStorage.setItem(DEMO_AUTH_STORAGE_KEY, JSON.stringify(user));
+      set({ user, isLoading: false });
+      return user;
+    }
+
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || 'เข้าสู่ระบบไม่สำเร็จ');
+        throw new Error(errData.message || "เข้าสู่ระบบไม่สำเร็จ");
       }
 
       const { user, session } = await response.json();
 
       // Store session in local storage for Supabase client
       if (session) {
-        localStorage.setItem('supabase.auth.token', session.access_token);
+        localStorage.setItem("supabase.auth.token", session.access_token);
       }
 
       set({ user, isLoading: false });
@@ -61,8 +76,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
-      fetch(`${API_URL}/auth/logout`, { method: 'POST' }); // Async call
-      localStorage.removeItem('supabase.auth.token');
+      if (DEMO_AUTH_ENABLED) {
+        localStorage.removeItem(DEMO_AUTH_STORAGE_KEY);
+      }
+      fetch(`${API_URL}/auth/logout`, { method: "POST" }); // Async call
+      localStorage.removeItem("supabase.auth.token");
       set({ user: null, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
@@ -72,7 +90,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkSession: async () => {
     set({ isLoading: true });
     try {
-      const token = localStorage.getItem('supabase.auth.token');
+      if (DEMO_AUTH_ENABLED) {
+        const rawUser = localStorage.getItem(DEMO_AUTH_STORAGE_KEY);
+        if (!rawUser) {
+          set({ user: null, isLoading: false });
+          return;
+        }
+        const user: UserProfile = JSON.parse(rawUser);
+        set({ user, isLoading: false });
+        return;
+      }
+
+      const token = localStorage.getItem("supabase.auth.token");
       if (!token) {
         set({ user: null, isLoading: false });
         return;
@@ -86,11 +115,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         const user = await response.json();
         set({ user, isLoading: false });
       } else {
-        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem("supabase.auth.token");
         set({ user: null, isLoading: false });
       }
     } catch (err: any) {
       set({ user: null, isLoading: false });
     }
-  }
+  },
 }));

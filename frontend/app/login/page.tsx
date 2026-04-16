@@ -1,13 +1,23 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth.store';
-import { Lock, AtSign, Key, Eye, EyeOff, LogIn, HelpCircle, Monitor, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { DEMO_AUTH_ENABLED, useAuthStore } from "@/store/auth.store";
+import {
+  Lock,
+  AtSign,
+  Key,
+  Eye,
+  EyeOff,
+  LogIn,
+  HelpCircle,
+  Monitor,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { login, isLoading, checkSession, user: authUser } = useAuthStore();
@@ -19,10 +29,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (authUser) {
-      if (authUser.role === 'admin') {
-        router.push('/dashboard');
+      if (authUser.role === "admin") {
+        router.push("/dashboard");
       } else {
-        router.push('/pos');
+        router.push("/pos");
       }
     }
   }, [authUser, router]);
@@ -31,20 +41,32 @@ export default function LoginPage() {
     e.preventDefault();
     setLocalError(null);
 
-    if (!email || !password) {
-      setLocalError('กรุณากรอกอีเมลและรหัสผ่าน');
+    if (!DEMO_AUTH_ENABLED && (!email || !password)) {
+      setLocalError("กรุณากรอกอีเมลและรหัสผ่าน");
       return;
     }
 
     try {
       const user = await login(email, password);
-      if (user.role === 'admin') {
-        router.push('/dashboard');
+      if (user.role === "admin") {
+        router.push("/dashboard");
       } else {
-        router.push('/pos');
+        router.push("/pos");
       }
     } catch (err: any) {
-      setLocalError(err.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      setLocalError(err.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    }
+  };
+
+  const handleDemoLogin = async (role: "admin" | "cashier") => {
+    setLocalError(null);
+    const demoEmail =
+      role === "admin" ? "admin@demo.local" : "cashier@demo.local";
+    try {
+      const user = await login(demoEmail, "demo-password");
+      router.push(user.role === "admin" ? "/dashboard" : "/pos");
+    } catch (err: any) {
+      setLocalError(err.message || "ไม่สามารถเข้าใช้งานโหมดเดโมได้");
     }
   };
 
@@ -55,10 +77,14 @@ export default function LoginPage() {
           <div className="w-8 h-8 flex items-center justify-center bg-primary rounded-lg text-white">
             <Monitor className="w-5 h-5" />
           </div>
-          <h2 className="text-xl font-bold leading-tight tracking-tight">ระบบ POS</h2>
+          <h2 className="text-xl font-bold leading-tight tracking-tight">
+            ระบบ POS
+          </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">V 2.4.0</span>
+          <span className="text-xs font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+            V 2.4.0
+          </span>
           <button className="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors hover:bg-primary/10 hover:text-primary">
             <HelpCircle className="w-5 h-5" />
           </button>
@@ -74,14 +100,24 @@ export default function LoginPage() {
                 <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm border border-slate-100 dark:border-slate-700">
                   <Lock className="w-8 h-8 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">ยินดีต้อนรับกลับมา</h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">กรุณาเข้าสู่ระบบเพื่อเริ่มใช้งาน</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  ยินดีต้อนรับกลับมา
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                  กรุณาเข้าสู่ระบบเพื่อเริ่มใช้งาน
+                </p>
               </div>
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50"></div>
             </div>
 
             <div className="p-8">
               <form className="space-y-5" onSubmit={handleLogin}>
+                {DEMO_AUTH_ENABLED && (
+                  <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+                    โหมดเดโมเปิดใช้งานอยู่:
+                    สามารถใช้ปุ่มด้านล่างเพื่อเข้าระบบแบบม็อกอัปได้ทันที
+                  </div>
+                )}
                 {localError && (
                   <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-xs font-medium flex items-start gap-2 border border-red-100 dark:border-red-800/30">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -110,7 +146,12 @@ export default function LoginPage() {
                       <Key className="w-4 h-4" />
                       รหัสผ่าน
                     </label>
-                    <a className="text-primary text-xs font-semibold hover:underline" href="#">ลืมรหัสผ่าน?</a>
+                    <a
+                      className="text-primary text-xs font-semibold hover:underline"
+                      href="#"
+                    >
+                      ลืมรหัสผ่าน?
+                    </a>
                   </div>
                   <div className="relative">
                     <input
@@ -126,14 +167,27 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 py-1">
-                  <input className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer" id="remember" type="checkbox" />
-                  <label className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none" htmlFor="remember">จดจำการเข้าใช้งานของฉัน</label>
+                  <input
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+                    id="remember"
+                    type="checkbox"
+                  />
+                  <label
+                    className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none"
+                    htmlFor="remember"
+                  >
+                    จดจำการเข้าใช้งานของฉัน
+                  </label>
                 </div>
 
                 <button
@@ -146,22 +200,45 @@ export default function LoginPage() {
                   ) : (
                     <LogIn className="w-5 h-5" />
                   )}
-                  {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+                  {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                 </button>
+
+                {DEMO_AUTH_ENABLED && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDemoLogin("cashier")}
+                      className="h-10 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                    >
+                      เข้าแบบแคชเชียร์ (Demo)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDemoLogin("admin")}
+                      className="h-10 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                    >
+                      เข้าแบบแอดมิน (Demo)
+                    </button>
+                  </div>
+                )}
               </form>
             </div>
           </div>
 
           <div className="text-center px-4">
             <p className="text-slate-500 text-sm">
-              ต้องการความช่วยเหลือ? ติดต่อฝ่ายสนับสนุนโทร <span className="font-bold text-primary">02-XXX-XXXX</span>
+              ต้องการความช่วยเหลือ? ติดต่อฝ่ายสนับสนุนโทร{" "}
+              <span className="font-bold text-primary">02-XXX-XXXX</span>
             </p>
           </div>
         </div>
       </main>
 
       <footer className="mt-auto py-6 px-4 text-center border-t border-slate-200 dark:border-slate-800">
-        <p className="text-slate-400 text-xs font-medium">© 2024 ระบบบริหารจัดการ ณ จุดขาย (POS) | พัฒนาโดย TechSolutions Co., Ltd.</p>
+        <p className="text-slate-400 text-xs font-medium">
+          © 2024 ระบบบริหารจัดการ ณ จุดขาย (POS) | พัฒนาโดย TechSolutions Co.,
+          Ltd.
+        </p>
       </footer>
     </div>
   );
