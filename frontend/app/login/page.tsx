@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DEMO_AUTH_ENABLED, useAuthStore } from "@/store/auth.store";
+import { demoDb } from "@/lib/demo/mock-db";
 import {
   Lock,
   AtSign,
@@ -68,6 +69,12 @@ export default function LoginPage() {
     } catch (err: any) {
       setLocalError(err.message || "ไม่สามารถเข้าใช้งานโหมดเดโมได้");
     }
+  };
+
+  const handleResetDemoData = () => {
+    demoDb.reset();
+    setLocalError(null);
+    alert("รีเซ็ต Seed Data สำหรับโหมดเดโมเรียบร้อยแล้ว");
   };
 
   return (
@@ -218,6 +225,13 @@ export default function LoginPage() {
                       className="h-10 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
                     >
                       เข้าแบบแอดมิน (Demo)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetDemoData}
+                      className="sm:col-span-2 h-10 rounded-lg border border-amber-300 dark:border-amber-700 hover:border-amber-500 text-sm font-semibold text-amber-700 dark:text-amber-300 transition-colors"
+                    >
+                      รีเซ็ต Seed Data (Demo)
                     </button>
                   </div>
                 )}
